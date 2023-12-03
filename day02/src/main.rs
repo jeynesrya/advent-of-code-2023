@@ -5,6 +5,7 @@ use regex::Regex;
 
 fn main() {
     part1();
+    part2();
 }
 
 fn part1() {
@@ -32,6 +33,33 @@ fn part1() {
 
     println!("Part 1: {}", total_sum);
 }
+
+fn part2() {
+    // Open the file in read-only mode
+    let file_path = "src/data.txt";
+    let file = match File::open(file_path) {
+        Ok(file) => file,
+        Err(e) => {
+            eprintln!("Error opening the file: {}", e);
+            return;
+        }
+    };
+
+    let reader = BufReader::new(file);
+    let mut total_sum = 0;
+
+    // Iterate over the lines, extract and append digits
+    for line in reader.lines() {
+        if let Ok(line_content) = line {
+            total_sum = total_sum.add(get_powers(&line_content));
+        } else {
+            eprintln!("Error reading a line.");
+        }
+    };
+
+    println!("Part 1: {}", total_sum);
+}
+
 
 fn get_id(line: &str) -> u32 {
     let parts: Vec<&str> = line.split(';').collect();
@@ -88,3 +116,34 @@ fn extract_game_number(input: &str) -> Option<u32> {
 
     None
 }
+
+fn get_powers(line: &str) -> u32 {
+    let green = extract_highest_number_for_color(line, "green").unwrap();
+    let red = extract_highest_number_for_color(line, "red").unwrap();
+    let blue = extract_highest_number_for_color(line, "blue").unwrap();
+
+    return green * red * blue;
+}
+
+fn extract_highest_number_for_color(input: &str, color: &str) -> Option<u32> {
+    let pattern = format!(r"(\d+) {}", color);
+    let regex = Regex::new(&pattern).unwrap();
+
+    let mut max_number: Option<u32> = None;
+
+    for capture in regex.captures_iter(input) {
+        if let Ok(number) = capture[1].parse::<u32>() {
+            if let Some(current_max) = max_number {
+                if number > current_max {
+                    max_number = Some(number);
+                }
+            } else {
+                // Initialize max_number if it's None
+                max_number = Some(number);
+            }
+        }
+    }
+
+    max_number
+}
+
